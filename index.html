@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MML 10 &mdash; Dimensionality Reduction with PCA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+    <style>
+        :root { --bg-primary:#0a0a0a; --bg-card:#0d1117; --bg-code:#161b22; --text-primary:#e6edf3; --text-secondary:#8b949e; --accent:#a78bfa; --accent-dim:#a78bfa44; --accent-glow:#a78bfa33; --accent-2:#f472b6; --accent-3:#fbbf24; --accent-4:#34d399; --border:#21262d; --font-display:'Space Grotesk',sans-serif; --font-mono:'JetBrains Mono','Fira Code',monospace; --font-body:'Inter',sans-serif; --max-width:900px; }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth}
+        body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-body);font-size:17px;line-height:1.7;overflow-x:hidden}
+        .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2rem 1.5rem;text-align:center;position:relative}
+        .hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:700px;height:600px;background:radial-gradient(circle,var(--accent-glow) 0%,transparent 70%);pointer-events:none;z-index:0}
+        .hero>*{position:relative;z-index:1}
+        .series-label{font-family:var(--font-mono);font-size:.85rem;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem}
+        .hero h1{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;color:var(--text-primary);line-height:1.2;margin-bottom:1rem}
+        .hero h1 .accent{color:var(--accent)}
+        .hero .subtitle{font-size:1.1rem;color:var(--text-secondary);max-width:640px;margin-bottom:2rem}
+        .tags{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:2.5rem}
+        .tag{font-family:var(--font-mono);font-size:.75rem;padding:.25rem .75rem;border-radius:999px;border:1px solid var(--accent);color:var(--accent);background:var(--accent-dim);white-space:nowrap}
+        .slide{min-height:100vh;max-width:var(--max-width);margin:0 auto;padding:4rem 1.5rem;position:relative;display:flex;flex-direction:column;justify-content:center}
+        .slide-number{font-family:var(--font-display);font-size:5rem;font-weight:700;color:var(--accent-dim);position:absolute;top:2rem;right:1.5rem;line-height:1;user-select:none}
+        .slide h2{font-family:var(--font-display);font-size:1.9rem;font-weight:700;color:var(--accent);margin-bottom:1.5rem;line-height:1.25}
+        .slide h3{font-family:var(--font-display);font-size:1.3rem;font-weight:600;color:var(--text-primary);margin-top:1.5rem;margin-bottom:.75rem}
+        .slide p{margin-bottom:1rem;color:var(--text-secondary)}
+        .slide p strong{color:var(--text-primary)}
+        .slide ul,.slide ol{margin-bottom:1rem;padding-left:1.5rem;color:var(--text-secondary)}
+        .slide li{margin-bottom:.4rem}
+        .slide li strong{color:var(--text-primary)}
+        .slide code{background:var(--bg-code);padding:.1rem .35rem;border-radius:3px;font-family:var(--font-mono);font-size:.85em;color:var(--accent)}
+        .diagram-grid{display:grid;gap:.75rem;margin:1.5rem 0;padding:1.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:8px}
+        .diagram-grid.cols-2{grid-template-columns:1fr 1fr}
+        .diagram-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+        .diagram-panel{padding:1rem;background:var(--bg-code);border:1px solid var(--border);border-radius:6px}
+        .diagram-panel.accent-border{border-left:3px solid var(--accent)}
+        .diagram-panel.r{border-left:3px solid var(--accent-2)}
+        .diagram-panel.y{border-left:3px solid var(--accent-3)}
+        .diagram-panel.g{border-left:3px solid var(--accent-4)}
+        .diagram-panel h4{font-family:var(--font-display);font-size:1rem;color:var(--accent);margin-bottom:.5rem}
+        .diagram-panel.r h4{color:var(--accent-2)}
+        .diagram-panel.y h4{color:var(--accent-3)}
+        .diagram-panel.g h4{color:var(--accent-4)}
+        .diagram-panel p,.diagram-panel ul{font-size:.9rem}
+        .callout{background:var(--bg-card);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin:1.25rem 0}
+        .callout p{margin-bottom:0}
+        .callout .callout-label{font-family:var(--font-mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem}
+        .canvas-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:1.25rem 0;overflow-x:auto}
+        .canvas-wrap canvas{display:block;margin:0 auto;max-width:100%}
+        .control-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin:1.25rem 0}
+        .control-row{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin-bottom:.75rem}
+        .control-row label{font-family:var(--font-mono);font-size:.8rem;color:var(--text-secondary);min-width:130px}
+        .control-row input[type="range"]{flex:1;min-width:150px;accent-color:var(--accent)}
+        .control-row .val{font-family:var(--font-mono);font-size:.85rem;color:var(--accent);min-width:80px;text-align:right}
+        .btn{font-family:var(--font-mono);font-size:.8rem;padding:.4rem .9rem;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:4px;cursor:pointer}
+        .btn:hover{background:rgba(167,139,250,.25)}
+        .btn.secondary{background:var(--bg-code);color:var(--text-secondary);border-color:var(--border)}
+        .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;margin-top:.75rem}
+        .metric{background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:.6rem .8rem;text-align:center}
+        .metric .metric-label{font-family:var(--font-mono);font-size:.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em}
+        .metric .metric-value{font-family:var(--font-display);font-size:1.25rem;color:var(--accent);font-weight:600;margin-top:.2rem}
+        .contents-list{list-style:none;padding-left:0;counter-reset:contents}
+        .contents-list li{counter-increment:contents;padding:.6rem 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem}
+        .contents-list li:last-child{border-bottom:none}
+        .contents-list li::before{content:counter(contents,decimal-leading-zero);font-family:var(--font-mono);font-size:.85rem;color:var(--accent);min-width:2rem}
+        .contents-list a{color:var(--text-primary);text-decoration:none}
+        .contents-list a:hover{color:var(--accent)}
+        .footer{text-align:center;padding:3rem 1.5rem;color:var(--text-secondary);font-size:.85rem;border-top:1px solid var(--border);max-width:var(--max-width);margin:0 auto}
+        .footer a{color:var(--accent);text-decoration:none}
+        .katex{color:var(--text-primary)}
+        .katex-display{margin:1rem 0;overflow-x:auto;overflow-y:hidden}
+        table{width:100%;border-collapse:collapse;font-size:.9rem;margin:1rem 0}
+        th{background:var(--bg-code);color:var(--accent);font-weight:600;text-align:left;padding:.6rem .85rem;border-bottom:1px solid var(--border);font-family:var(--font-display)}
+        td{padding:.5rem .85rem;border-bottom:1px solid var(--border);color:var(--text-secondary);vertical-align:top}
+        tr:last-child td{border-bottom:none}
+        tr:nth-child(even) td{background:rgba(13,17,23,.5)}
+        @media (max-width:640px){.slide{padding:3rem 1rem;min-height:auto}.slide-number{font-size:3rem;top:1.5rem;right:1rem}.slide h2{font-size:1.5rem}.diagram-grid.cols-2,.diagram-grid.cols-3{grid-template-columns:1fr}.hero h1{font-size:1.8rem}}
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="series-label">Mathematics for Machine Learning &mdash; Deck 10</div>
+    <h1>Dimensionality Reduction with <span class="accent">PCA</span></h1>
+    <p class="subtitle">Two objectives, one matrix decomposition &mdash; PCA is the projection that loses the least and the direction of greatest variance, simultaneously.</p>
+
+    <div class="tags">
+        <span class="tag">variance</span><span class="tag">reconstruction</span>
+        <span class="tag">covariance</span><span class="tag">SVD</span>
+        <span class="tag">whitening</span><span class="tag">probabilistic PCA</span>
+    </div>
+</header>
+
+<section class="slide" id="slide-00">
+    <div class="slide-number">00</div>
+    <h2>Topics We'll Cover</h2>
+    <ul class="contents-list">
+        <li><a href="#slide-01">Setting up the problem</a></li>
+        <li><a href="#slide-02">View 1 &mdash; maximise the projected variance</a></li>
+        <li><a href="#slide-03">View 2 &mdash; minimise the reconstruction error</a></li>
+        <li><a href="#slide-04">The two views give the same answer</a></li>
+        <li><a href="#slide-05">PCA via the SVD</a></li>
+        <li><a href="#slide-06">Interactive: 2D &rarr; 1D PCA</a></li>
+        <li><a href="#slide-07">High-dimensional PCA, the dual trick</a></li>
+        <li><a href="#slide-08">Probabilistic PCA</a></li>
+        <li><a href="#slide-09">When PCA fails</a></li>
+        <li><a href="#slide-10">Cheat sheet</a></li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-01">
+    <div class="slide-number">01</div>
+    <h2>Setting Up the Problem</h2>
+    <p>We have data $X = [\mathbf{x}_1, \dots, \mathbf{x}_N]^\top \in\mathbb{R}^{N\times D}$. We want a projection to $M&lt; D$ dimensions:</p>
+    <p>$$\mathbf{z}_n = B^\top(\mathbf{x}_n - \boldsymbol\mu),\qquad \tilde{\mathbf{x}}_n = \boldsymbol\mu + B\mathbf{z}_n,$$</p>
+    <p>where $B\in\mathbb{R}^{D\times M}$ has orthonormal columns and $\boldsymbol\mu$ is the (sample) mean. Three quantities are at play:</p>
+    <ul>
+        <li><strong>codes</strong> $\mathbf{z}_n\in\mathbb{R}^M$ &mdash; the reduced representation;</li>
+        <li><strong>reconstruction</strong> $\tilde{\mathbf{x}}_n\in\mathbb{R}^D$ &mdash; what you'd recover after lossy compression;</li>
+        <li><strong>residual</strong> $\mathbf{x}_n - \tilde{\mathbf{x}}_n$ &mdash; what was lost.</li>
+    </ul>
+    <p>From deck 03 we know that for any fixed $B$ the choice $\mathbf{z}_n = B^\top(\mathbf{x}_n - \boldsymbol\mu)$ produces $\tilde{\mathbf{x}}_n$ as the orthogonal projection of $\mathbf{x}_n$ onto $\boldsymbol\mu + \mathrm{Col}(B)$. So the only design choice is $B$.</p>
+</section>
+
+<section class="slide" id="slide-02">
+    <div class="slide-number">02</div>
+    <h2>View 1 &mdash; Maximise the Projected Variance</h2>
+    <p>Centre the data: set $\boldsymbol\mu = \tfrac1N\sum_n\mathbf{x}_n$, replace $\mathbf{x}_n \to \mathbf{x}_n - \boldsymbol\mu$. The sample covariance is</p>
+    <p>$$S = \frac{1}{N}\sum_n \mathbf{x}_n\mathbf{x}_n^\top.$$</p>
+    <p>For a unit-norm direction $\mathbf{b}$, the variance of $\mathbf{b}^\top\mathbf{x}$ is $\mathbf{b}^\top S\mathbf{b}$. We want to find</p>
+    <p>$$\mathbf{b}_1 = \arg\max_{\|\mathbf{b}\|=1}\;\mathbf{b}^\top S\mathbf{b}.$$</p>
+    <p>Form the Lagrangian (deck 07):</p>
+    <p>$$\mathcal L(\mathbf{b}, \lambda) = \mathbf{b}^\top S\mathbf{b} - \lambda(\mathbf{b}^\top\mathbf{b}-1), \qquad \nabla_{\mathbf{b}}\mathcal L = 2S\mathbf{b} - 2\lambda\mathbf{b} = 0.$$</p>
+    <p>So $S\mathbf{b}_1 = \lambda_1\mathbf{b}_1$: $\mathbf{b}_1$ is an <strong>eigenvector</strong> of $S$ with eigenvalue equal to the variance it captures. To maximise, pick the eigenvector with the largest eigenvalue. The next direction $\mathbf{b}_2$ is the largest eigenvector among those orthogonal to $\mathbf{b}_1$, etc.</p>
+</section>
+
+<section class="slide" id="slide-03">
+    <div class="slide-number">03</div>
+    <h2>View 2 &mdash; Minimise the Reconstruction Error</h2>
+    <p>Same setup, but now minimise</p>
+    <p>$$J(B) = \frac{1}{N}\sum_n \|\mathbf{x}_n - BB^\top\mathbf{x}_n\|^2 = \frac{1}{N}\sum_n \mathbf{x}_n^\top(I - BB^\top)\mathbf{x}_n.$$</p>
+    <p>Use the trace identity $\mathbf{a}^\top A\mathbf{a} = \mathrm{tr}(\mathbf{a}\mathbf{a}^\top A)$ and cyclic trace:</p>
+    <p>$$J(B) = \mathrm{tr}\bigl((I - BB^\top)S\bigr) = \mathrm{tr}(S) - \mathrm{tr}(B^\top S B).$$</p>
+    <p>So minimising reconstruction error is the same as maximising $\mathrm{tr}(B^\top SB)$ &mdash; which, subject to $B^\top B = I$, is solved by taking the top $M$ eigenvectors of $S$ as the columns of $B$.</p>
+
+    <div class="callout">
+        <div class="callout-label">Why two views matter</div>
+        <p>The variance view says: "find directions of greatest spread". The reconstruction view says: "find the subspace closest to the data". They give the same answer in the Gaussian / squared-loss setting &mdash; but the two questions split when the loss changes (robust PCA, sparse PCA, autoencoders).</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-04">
+    <div class="slide-number">04</div>
+    <h2>The Two Views Give the Same Answer</h2>
+    <p>Combining: the optimal $B$ is the matrix whose columns are the top $M$ orthonormal eigenvectors of $S$.</p>
+    <p>$$S = U\Lambda U^\top, \quad \Lambda = \mathrm{diag}(\lambda_1\ge\lambda_2\ge\dots).$$</p>
+    <p>$$B_M = U[:, 1{:}M], \qquad \text{reconstruction error} = \sum_{i=M+1}^D \lambda_i.$$</p>
+    <p>Total variance is $\sum_i\lambda_i = \mathrm{tr}(S)$; the variance <em>kept</em> by $B_M$ is $\sum_{i=1}^M \lambda_i$, the variance <em>lost</em> is $\sum_{i=M+1}^D \lambda_i$ &mdash; which is exactly the reconstruction error.</p>
+
+    <h3>Whitening</h3>
+    <p>Once you have $B$ and $\Lambda$, the <strong>whitened</strong> data is $\mathbf{z}_n = \Lambda^{-1/2}B^\top\mathbf{x}_n$. It has identity sample covariance and is the input you want for any subsequent geometric algorithm.</p>
+</section>
+
+<section class="slide" id="slide-05">
+    <div class="slide-number">05</div>
+    <h2>PCA via the SVD</h2>
+    <p>Stack the centred data as rows: $\tilde X\in\mathbb{R}^{N\times D}$. Then $S = \tilde X^\top\tilde X / N$.</p>
+    <p>Compute the SVD $\tilde X = U\Sigma V^\top$. Then:</p>
+    <ul>
+        <li>$\tilde X^\top\tilde X = V\Sigma^2 V^\top$, so $V$ holds the eigenvectors of $NS$;</li>
+        <li>The singular values relate to eigenvalues by $\sigma_i^2 = N\lambda_i$;</li>
+        <li>The first $M$ principal components of $\tilde X$ are $\tilde X V[:, 1{:}M] = U[:,1{:}M]\Sigma[1{:}M, 1{:}M]$.</li>
+    </ul>
+    <p>Computing the SVD of $\tilde X$ directly is more numerically stable than forming $\tilde X^\top\tilde X$ and eigendecomposing. Production libraries (NumPy, sklearn) implement PCA via the SVD.</p>
+
+    <div class="callout">
+        <div class="callout-label">Eckart&ndash;Young again</div>
+        <p>The rank-$M$ matrix $U[:,1{:}M]\Sigma[1{:}M,1{:}M]V[:,1{:}M]^\top$ is the closest rank-$M$ approximation of $\tilde X$ (deck 04). PCA is therefore Eckart&ndash;Young applied to the centred data matrix.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-06">
+    <div class="slide-number">06</div>
+    <h2>Interactive: 2D &rarr; 1D PCA</h2>
+    <p>Click on the canvas to add points; the principal-axis line and the second axis update live, with the projections drawn as ticks on the major axis. Numerical readouts give the variance kept on the major axis vs the residual.</p>
+
+    <div class="canvas-wrap">
+        <canvas id="pca-canvas" width="700" height="420"></canvas>
+    </div>
+
+    <div class="control-panel">
+        <div class="control-row">
+            <button class="btn" id="pca-blob1">Sample anisotropic blob</button>
+            <button class="btn" id="pca-blob2">Sample isotropic blob</button>
+            <button class="btn secondary" id="pca-clear">Clear</button>
+        </div>
+        <div class="metric-grid">
+            <div class="metric"><div class="metric-label">N</div><div class="metric-value" id="pca-n">0</div></div>
+            <div class="metric"><div class="metric-label">λ₁</div><div class="metric-value" id="pca-l1">—</div></div>
+            <div class="metric"><div class="metric-label">λ₂</div><div class="metric-value" id="pca-l2">—</div></div>
+            <div class="metric"><div class="metric-label">variance kept</div><div class="metric-value" id="pca-keep">—</div></div>
+        </div>
+    </div>
+
+    <p>For an isotropic blob, $\lambda_1 \approx \lambda_2$ and PCA is essentially uninformative &mdash; every direction is equally good. The more anisotropic the cloud, the better the rank-1 approximation.</p>
+</section>
+
+<section class="slide" id="slide-07">
+    <div class="slide-number">07</div>
+    <h2>High-Dimensional PCA: The Dual Trick</h2>
+    <p>When $D \gg N$ (think images: $D = 10^6$ pixels, $N = 1000$ examples), $S$ is a $D\times D$ matrix &mdash; intractable to form, let alone eigendecompose.</p>
+    <p>But the eigenvalues of $\tilde X^\top\tilde X$ and $\tilde X\tilde X^\top$ are the same (up to zeros). The matrix $\tilde X\tilde X^\top$ is $N\times N$, often tractable:</p>
+    <p>$$\tilde X\tilde X^\top \mathbf{u}_i = \mu_i \mathbf{u}_i, \qquad \mathbf{v}_i = \tilde X^\top\mathbf{u}_i / \|\tilde X^\top\mathbf{u}_i\|.$$</p>
+    <p>So you can recover the principal directions $\mathbf{v}_i$ in $\mathbb{R}^D$ by eigendecomposing the $N\times N$ Gram matrix and then projecting back through $\tilde X^\top$. This is the foundation of <strong>kernel PCA</strong>, where $\tilde X\tilde X^\top$ is replaced by the kernel matrix.</p>
+</section>
+
+<section class="slide" id="slide-08">
+    <div class="slide-number">08</div>
+    <h2>Probabilistic PCA</h2>
+    <p>Treat PCA as a generative model:</p>
+    <p>$$\mathbf{z}_n \sim \mathcal N(\mathbf 0, I_M), \qquad \mathbf{x}_n \mid \mathbf{z}_n \sim \mathcal N(W\mathbf{z}_n + \boldsymbol\mu, \sigma^2 I_D).$$</p>
+    <p>Latent factors $\mathbf{z}_n$ are sampled, then a linear map plus isotropic noise produces $\mathbf{x}_n$. Marginalising out $\mathbf{z}_n$ (deck 06):</p>
+    <p>$$\mathbf{x}_n \sim \mathcal N(\boldsymbol\mu, WW^\top + \sigma^2 I).$$</p>
+    <p>The maximum-likelihood solution recovers exactly classical PCA (with a corrective $\sigma^2 I$ in the covariance). As $\sigma^2 \to 0$, probabilistic PCA &rarr; classical PCA.</p>
+
+    <div class="callout">
+        <div class="callout-label">Why bother with the generative version?</div>
+        <p>It lets you sample new data, handle missing entries by EM (deck 11 generalises), evaluate a likelihood, and naturally extend to mixtures of PCAs &mdash; each cluster gets its own low-dim subspace.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-09">
+    <div class="slide-number">09</div>
+    <h2>When PCA Fails</h2>
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel r">
+            <h4>Non-Gaussian structure</h4>
+            <p>Variance is a second-moment summary. For heavy-tailed or skewed distributions it can be a poor proxy for "interesting structure". ICA, robust PCA fix this.</p>
+        </div>
+        <div class="diagram-panel y">
+            <h4>Non-linear manifolds</h4>
+            <p>A 2D swiss roll embedded in $\mathbb{R}^3$ has variance in every direction. PCA flattens it; you want a manifold method (t-SNE, UMAP, kernel PCA, autoencoders).</p>
+        </div>
+        <div class="diagram-panel g">
+            <h4>Scale-sensitive data</h4>
+            <p>Features measured in different units dominate based on their numerical scale, not their information content. Always normalise (z-score) before PCA on tabular data.</p>
+        </div>
+    </div>
+
+    <p>PCA is still &mdash; by a long margin &mdash; the most-used dimensionality reduction tool in ML. It is well-understood, fast, and gives an explicit basis to interpret. Use it as a sanity check before trying anything fancier.</p>
+</section>
+
+<section class="slide" id="slide-10">
+    <div class="slide-number">10</div>
+    <h2>Cheat Sheet</h2>
+    <table>
+        <thead><tr><th>Object</th><th>Formula</th></tr></thead>
+        <tbody>
+            <tr><td>Sample covariance</td><td>$S = \tfrac1N \sum_n (\mathbf x_n-\boldsymbol\mu)(\mathbf x_n-\boldsymbol\mu)^\top$</td></tr>
+            <tr><td>PCA directions</td><td>$\mathbf b_i$ = top eigenvectors of $S$</td></tr>
+            <tr><td>Variance captured</td><td>$\sum_{i=1}^M \lambda_i / \sum_{i=1}^D \lambda_i$</td></tr>
+            <tr><td>Reconstruction error</td><td>$\sum_{i=M+1}^D \lambda_i$</td></tr>
+            <tr><td>Code</td><td>$\mathbf z_n = B^\top(\mathbf x_n - \boldsymbol\mu)$</td></tr>
+            <tr><td>Whitening</td><td>$\mathbf w_n = \Lambda^{-1/2}B^\top(\mathbf x_n - \boldsymbol\mu)$</td></tr>
+            <tr><td>PCA via SVD</td><td>$\tilde X = U\Sigma V^\top$, principal axes $=$ columns of $V$</td></tr>
+            <tr><td>Dual / kernel</td><td>$\tilde X\tilde X^\top$ &mdash; size $N\times N$ instead of $D\times D$</td></tr>
+            <tr><td>Probabilistic PCA</td><td>$\mathbf x \sim \mathcal N(\boldsymbol\mu, WW^\top + \sigma^2 I)$</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<footer class="footer">
+    <p><strong>Book:</strong> Deisenroth, Faisal &amp; Ong, <em>Mathematics for Machine Learning</em> &mdash; Cambridge University Press, 2020, chapter 10.<br>Free PDF: <a href="https://mml-book.github.io/book/mml-book.pdf">mml-book.github.io/book/mml-book.pdf</a></p>
+    <p style="margin-top:.6rem"><a href="https://brendanjameslynskey.github.io/MML_Hub/">&larr; All decks</a> &middot; <a href="https://brendanjameslynskey.github.io/MML_09_Linear_Regression/">prev (09)</a> &middot; <a href="https://brendanjameslynskey.github.io/MML_11_Gaussian_Mixture_Models/">next (11) &rarr;</a></p>
+</footer>
+
+<script>
+// 2D PCA visualiser
+(function() {
+    const cvs = document.getElementById('pca-canvas');
+    if (!cvs) return;
+    const ctx = cvs.getContext('2d');
+    const W = 700, H = 420;
+    cvs.width = W; cvs.height = H;
+
+    const xMin=-3, xMax=3, yMin=-1.9, yMax=1.9;
+    function toS(x,y){ return [(x-xMin)/(xMax-xMin)*W, H-(y-yMin)/(yMax-yMin)*H]; }
+    function fromS(sx,sy){ return [(sx/W)*(xMax-xMin)+xMin, yMin+(1-sy/H)*(yMax-yMin)]; }
+
+    let points = [];
+
+    function pca() {
+        if (points.length < 2) return null;
+        const N = points.length;
+        let mx=0,my=0;
+        for (const p of points) { mx += p.x; my += p.y; }
+        mx /= N; my /= N;
+        let cxx=0, cxy=0, cyy=0;
+        for (const p of points) {
+            const dx = p.x-mx, dy = p.y-my;
+            cxx += dx*dx; cyy += dy*dy; cxy += dx*dy;
+        }
+        cxx /= N; cyy /= N; cxy /= N;
+        // 2x2 eigendecomposition
+        const tr = cxx + cyy;
+        const det = cxx*cyy - cxy*cxy;
+        const disc = Math.max(0, tr*tr/4 - det);
+        const l1 = tr/2 + Math.sqrt(disc);
+        const l2 = tr/2 - Math.sqrt(disc);
+        let ang;
+        if (Math.abs(cxy) < 1e-9) ang = (cxx >= cyy) ? 0 : Math.PI/2;
+        else ang = Math.atan2(l1 - cxx, cxy);
+        return {mx, my, l1, l2, ang};
+    }
+
+    function draw() {
+        ctx.fillStyle = '#0d1117'; ctx.fillRect(0,0,W,H);
+        ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
+        const o = toS(0,0);
+        ctx.beginPath(); ctx.moveTo(0, o[1]); ctx.lineTo(W, o[1]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(o[0], 0); ctx.lineTo(o[0], H); ctx.stroke();
+
+        const r = pca();
+        if (r) {
+            // major axis line
+            const cx = Math.cos(r.ang), cy = Math.sin(r.ang);
+            const len = 10;
+            const a = toS(r.mx - cx*len, r.my - cy*len);
+            const b = toS(r.mx + cx*len, r.my + cy*len);
+            ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+            // minor axis
+            const px = -cy, py = cx;
+            const a2 = toS(r.mx - px*len, r.my - py*len);
+            const b2 = toS(r.mx + px*len, r.my + py*len);
+            ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
+            ctx.beginPath(); ctx.moveTo(a2[0], a2[1]); ctx.lineTo(b2[0], b2[1]); ctx.stroke();
+            ctx.setLineDash([]);
+            // 2-sigma ellipse
+            ctx.strokeStyle = 'rgba(167,139,250,0.55)';
+            ctx.beginPath();
+            const Ne=60;
+            for (let i=0;i<=Ne;i++) {
+                const t = (i/Ne)*2*Math.PI;
+                const uu = 2*Math.sqrt(r.l1)*Math.cos(t);
+                const vv = 2*Math.sqrt(r.l2)*Math.sin(t);
+                const xx = r.mx + cx*uu - cy*vv;
+                const yy = r.my + cy*uu + cx*vv;
+                const [sx,sy] = toS(xx, yy);
+                if (i===0) ctx.moveTo(sx,sy); else ctx.lineTo(sx,sy);
+            }
+            ctx.stroke();
+            // residual tick: project each point to major axis, draw the residual segment
+            ctx.strokeStyle = 'rgba(244,114,182,0.35)'; ctx.lineWidth = 1;
+            for (const p of points) {
+                const dx = p.x - r.mx, dy = p.y - r.my;
+                const t = dx*cx + dy*cy;
+                const px2 = r.mx + cx*t, py2 = r.my + cy*t;
+                const a3 = toS(p.x, p.y), b3 = toS(px2, py2);
+                ctx.beginPath(); ctx.moveTo(a3[0], a3[1]); ctx.lineTo(b3[0], b3[1]); ctx.stroke();
+            }
+        }
+        // points
+        ctx.fillStyle = '#fbbf24';
+        for (const p of points) {
+            const [sx, sy] = toS(p.x, p.y);
+            ctx.beginPath(); ctx.arc(sx, sy, 4, 0, 2*Math.PI); ctx.fill();
+        }
+        // metrics
+        document.getElementById('pca-n').textContent = points.length;
+        if (r) {
+            document.getElementById('pca-l1').textContent = r.l1.toFixed(3);
+            document.getElementById('pca-l2').textContent = r.l2.toFixed(3);
+            document.getElementById('pca-keep').textContent = (100*r.l1/(r.l1+r.l2+1e-9)).toFixed(1)+'%';
+        } else {
+            document.getElementById('pca-l1').textContent = '—';
+            document.getElementById('pca-l2').textContent = '—';
+            document.getElementById('pca-keep').textContent = '—';
+        }
+        // legend
+        ctx.fillStyle = '#8b949e'; ctx.font = '12px JetBrains Mono, monospace';
+        ctx.fillText('major axis', 14, 22);
+        ctx.fillStyle = '#a78bfa';
+        ctx.fillRect(96, 14, 16, 2);
+        ctx.fillStyle = '#8b949e'; ctx.fillText('minor axis', 14, 40);
+        ctx.fillStyle = '#f472b6'; ctx.fillRect(96, 33, 16, 2);
+    }
+
+    function sampleBlob(anisotropic) {
+        points = [];
+        const ang = Math.PI/6;
+        const sx = anisotropic ? 1.2 : 0.7;
+        const sy = anisotropic ? 0.25 : 0.7;
+        for (let i=0;i<60;i++) {
+            const a = (Math.random()+Math.random()+Math.random()-1.5)*sx;
+            const b = (Math.random()+Math.random()+Math.random()-1.5)*sy;
+            const x = Math.cos(ang)*a - Math.sin(ang)*b;
+            const y = Math.sin(ang)*a + Math.cos(ang)*b;
+            points.push({x, y});
+        }
+        draw();
+    }
+
+    cvs.addEventListener('click', e => {
+        const r = cvs.getBoundingClientRect();
+        const sx = (e.clientX-r.left)*(W/r.width), sy = (e.clientY-r.top)*(H/r.height);
+        const [wx, wy] = fromS(sx, sy);
+        if (wx>xMin && wx<xMax && wy>yMin && wy<yMax) points.push({x:wx, y:wy});
+        draw();
+    });
+    document.getElementById('pca-blob1').addEventListener('click', () => sampleBlob(true));
+    document.getElementById('pca-blob2').addEventListener('click', () => sampleBlob(false));
+    document.getElementById('pca-clear').addEventListener('click', () => { points = []; draw(); });
+    sampleBlob(true);
+})();
+</script>
+
+</body>
+</html>
