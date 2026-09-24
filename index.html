@@ -11,7 +11,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
     <style>
-        :root { --bg-primary:#0a0a0a; --bg-card:#0d1117; --bg-code:#161b22; --text-primary:#e6edf3; --text-secondary:#8b949e; --accent:#a78bfa; --accent-dim:#a78bfa44; --accent-glow:#a78bfa33; --accent-2:#f472b6; --accent-3:#fbbf24; --accent-4:#34d399; --border:#21262d; --font-display:'Space Grotesk',sans-serif; --font-mono:'JetBrains Mono','Fira Code',monospace; --font-body:'Inter',sans-serif; --max-width:900px; }
+        :root { --bg-primary:#222d29; --bg-card:#28342f; --bg-code:#2f3c37; --text-primary:#ecebe3; --text-secondary:#9caaa2; --accent:#c6b6e7; --accent-dim:#c6b6e744; --accent-glow:#c6b6e733; --accent-2:#e9a9c2; --accent-3:#f0e190; --accent-4:#a9dba2; --border:#3e4e48; --font-display:'Space Grotesk',sans-serif; --font-mono:'JetBrains Mono','Fira Code',monospace; --font-body:'Inter',sans-serif; --max-width:900px; }
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html{scroll-behavior:smooth}
         body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-body);font-size:17px;line-height:1.7;overflow-x:hidden}
@@ -58,7 +58,7 @@
         .control-row input[type="range"]{flex:1;min-width:150px;accent-color:var(--accent)}
         .control-row .val{font-family:var(--font-mono);font-size:.85rem;color:var(--accent);min-width:80px;text-align:right}
         .btn{font-family:var(--font-mono);font-size:.8rem;padding:.4rem .9rem;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:4px;cursor:pointer}
-        .btn:hover{background:rgba(167,139,250,.25)}
+        .btn:hover{background:rgba(198,182,231,.25)}
         .btn.secondary{background:var(--bg-code);color:var(--text-secondary);border-color:var(--border)}
         .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;margin-top:.75rem}
         .metric{background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:.6rem .8rem;text-align:center}
@@ -78,7 +78,7 @@
         th{background:var(--bg-code);color:var(--accent);font-weight:600;text-align:left;padding:.6rem .85rem;border-bottom:1px solid var(--border);font-family:var(--font-display)}
         td{padding:.5rem .85rem;border-bottom:1px solid var(--border);color:var(--text-secondary);vertical-align:top}
         tr:last-child td{border-bottom:none}
-        tr:nth-child(even) td{background:rgba(13,17,23,.5)}
+        tr:nth-child(even) td{background:rgba(40,52,47,.5)}
         @media (max-width:640px){.slide{padding:3rem 1rem;min-height:auto}.slide-number{font-size:3rem;top:1.5rem;right:1rem}.slide h2{font-size:1.5rem}.diagram-grid.cols-2,.diagram-grid.cols-3{grid-template-columns:1fr}.hero h1{font-size:1.8rem}}
     </style>
 </head>
@@ -319,8 +319,8 @@
     }
 
     function draw() {
-        ctx.fillStyle = '#0d1117'; ctx.fillRect(0,0,W,H);
-        ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
+        ctx.fillStyle = '#28342f'; ctx.fillRect(0,0,W,H);
+        ctx.strokeStyle = '#3e4e48'; ctx.lineWidth = 1;
         const o = toS(0,0);
         ctx.beginPath(); ctx.moveTo(0, o[1]); ctx.lineTo(W, o[1]); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(o[0], 0); ctx.lineTo(o[0], H); ctx.stroke();
@@ -332,17 +332,17 @@
             const len = 10;
             const a = toS(r.mx - cx*len, r.my - cy*len);
             const b = toS(r.mx + cx*len, r.my + cy*len);
-            ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#c6b6e7'; ctx.lineWidth = 2.5;
             ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
             // minor axis
             const px = -cy, py = cx;
             const a2 = toS(r.mx - px*len, r.my - py*len);
             const b2 = toS(r.mx + px*len, r.my + py*len);
-            ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
+            ctx.strokeStyle = '#e9a9c2'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
             ctx.beginPath(); ctx.moveTo(a2[0], a2[1]); ctx.lineTo(b2[0], b2[1]); ctx.stroke();
             ctx.setLineDash([]);
             // 2-sigma ellipse
-            ctx.strokeStyle = 'rgba(167,139,250,0.55)';
+            ctx.strokeStyle = 'rgba(198,182,231,0.55)';
             ctx.beginPath();
             const Ne=60;
             for (let i=0;i<=Ne;i++) {
@@ -356,7 +356,7 @@
             }
             ctx.stroke();
             // residual tick: project each point to major axis, draw the residual segment
-            ctx.strokeStyle = 'rgba(244,114,182,0.35)'; ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(233,169,194,0.35)'; ctx.lineWidth = 1;
             for (const p of points) {
                 const dx = p.x - r.mx, dy = p.y - r.my;
                 const t = dx*cx + dy*cy;
@@ -366,7 +366,7 @@
             }
         }
         // points
-        ctx.fillStyle = '#fbbf24';
+        ctx.fillStyle = '#f0e190';
         for (const p of points) {
             const [sx, sy] = toS(p.x, p.y);
             ctx.beginPath(); ctx.arc(sx, sy, 4, 0, 2*Math.PI); ctx.fill();
@@ -383,12 +383,12 @@
             document.getElementById('pca-keep').textContent = '—';
         }
         // legend
-        ctx.fillStyle = '#8b949e'; ctx.font = '12px JetBrains Mono, monospace';
+        ctx.fillStyle = '#9caaa2'; ctx.font = '12px JetBrains Mono, monospace';
         ctx.fillText('major axis', 14, 22);
-        ctx.fillStyle = '#a78bfa';
+        ctx.fillStyle = '#c6b6e7';
         ctx.fillRect(96, 14, 16, 2);
-        ctx.fillStyle = '#8b949e'; ctx.fillText('minor axis', 14, 40);
-        ctx.fillStyle = '#f472b6'; ctx.fillRect(96, 33, 16, 2);
+        ctx.fillStyle = '#9caaa2'; ctx.fillText('minor axis', 14, 40);
+        ctx.fillStyle = '#e9a9c2'; ctx.fillRect(96, 33, 16, 2);
     }
 
     function sampleBlob(anisotropic) {
